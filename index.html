@@ -16,6 +16,11 @@
 
 <!-- PWA Manifest (inline) -->
 <script>
+
+function login() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider);
+}
 // Register inline manifest
 const manifest = {
   name: "Sadhana — Daily Practice",
@@ -36,6 +41,10 @@ const link = document.createElement('link');
 link.rel = 'manifest';
 link.href = URL.createObjectURL(blob);
 document.head.appendChild(link);
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
 </script>
 
 <style>
@@ -1389,5 +1398,6 @@ const firebaseConfig = {
 </script>
 </body>
 </html>
+
 
 
