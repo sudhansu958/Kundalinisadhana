@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0806">
+<meta name="description" content="Sadhana — Daily Practice Tracker. Works offline.">
+<title>Sadhana — Daily Practice</title>
+
+<!-- PWA Manifest (inline) -->
+<script>
+// Register inline manifest
+const manifest = {
+  name: "Sadhana — Daily Practice",
+  short_name: "Sadhana",
+  description: "Daily spiritual practice tracker. Works offline.",
+  start_url: "./",
+  display: "standalone",
+  background_color: "#0a0806",
+  theme_color: "#0a0806",
+  orientation: "portrait-primary",
+  icons: [
+    { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%230a0806'/%3E%3Ctext x='96' y='130' text-anchor='middle' font-size='110' font-family='serif'%3E%F0%9F%95%89%3C/text%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" },
+    { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%230a0806'/%3E%3Ctext x='256' y='340' text-anchor='middle' font-size='300' font-family='serif'%3E%F0%9F%95%89%3C/text%3E%3C/svg%3E", sizes: "512x512", type: "image/svg+xml" }
+  ]
+};
+const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+const link = document.createElement('link');
+link.rel = 'manifest';
+link.href = URL.createObjectURL(blob);
+document.head.appendChild(link);
+</script>
+
+<style>
+/* ── RESET & TOKENS ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0806;--sf:#13100d;--sf2:#1c1814;--sf3:#252018;
+  --bd:rgba(255,255,255,0.06);--bd2:rgba(255,255,255,0.11);--bd3:rgba(255,255,255,0.18);
+  --tx:#f0e8d8;--tx2:#9a8e7e;--tx3:#5a5048;--tx4:#3a3028;
+  --go:#d4a035;--go2:#f0c060;--go3:#ffdd88;--gd:rgba(212,160,53,0.13);--gd2:rgba(212,160,53,0.22);
+  --te:#1a9e7a;--te2:#22c99a;--td:rgba(26,158,122,0.12);
+  --re:#c0392b;--rd:rgba(192,57,43,0.14);
+  --pu:#7c5cbf;--pu2:#9b7de0;--pd:rgba(124,92,191,0.13);
+  --bl:#2d6cdf;
+  --r:12px;--rs:8px;--rx:5px;
+  font-size:15px;
+}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;line-height:1.6;overflow-x:hidden}
+button,input,select,textarea{font-family:inherit}
+a{color:var(--go)}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:var(--sf)}
+::-webkit-scrollbar-thumb{background:var(--bd3);border-radius:99px}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+
+/* ── OFFLINE BANNER ── */
+#ob{display:none;background:var(--rd);border-bottom:1px solid var(--re);color:var(--re);text-align:center;padding:5px;font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+#ob.show{display:block}
+
+/* ── INSTALL BANNER ── */
+#ib{display:none;background:var(--gd);border-bottom:1px solid var(--gd2);padding:8px 16px;font-size:12px;color:var(--go2);align-items:center;gap:10px;justify-content:space-between}
+#ib.show{display:flex}
+#ib button{background:var(--go);color:#0a0806;border:none;border-radius:var(--rx);padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer}
+
+/* ── HEADER ── */
+.hdr{background:var(--sf);border-bottom:1px solid var(--bd);padding:0 1rem;position:sticky;top:0;z-index:300;height:52px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:1rem;font-weight:800;color:var(--go);letter-spacing:.04em;display:flex;align-items:center;gap:7px}
+.logo-s{font-size:9px;color:var(--tx3);letter-spacing:.1em;text-transform:uppercase;display:block;margin-top:1px;font-weight:400}
+.hr{display:flex;align-items:center;gap:6px}
+.hb{background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rx);padding:4px 9px;font-size:11px;color:var(--tx2);cursor:pointer;letter-spacing:.03em;transition:all .15s;white-space:nowrap}
+.hb:hover,.hb:active{background:var(--sf3);color:var(--tx)}
+.hb.sync{color:var(--te);border-color:rgba(26,158,122,0.3)}
+.dp{background:var(--gd);border:1px solid var(--gd2);border-radius:var(--rx);padding:4px 9px;font-size:12px;font-weight:700;color:var(--go2);cursor:pointer;letter-spacing:.02em}
+
+/* ── TICKER ── */
+.tkr{background:var(--gd);border-bottom:1px solid rgba(212,160,53,0.12);padding:5px 0;overflow:hidden;white-space:nowrap}
+.tkr-i{display:inline-block;animation:tkr 45s linear infinite;font-size:10px;font-weight:700;color:var(--go2);letter-spacing:.1em;text-transform:uppercase}
+@keyframes tkr{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+
+/* ── NAV ── */
+.nav{background:var(--sf);border-bottom:1px solid var(--bd);display:flex;overflow-x:auto;scrollbar-width:none;padding:0 .75rem}
+.nav::-webkit-scrollbar{display:none}
+.tab{padding:.65rem .85rem;font-size:11px;font-weight:600;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;letter-spacing:.06em;text-transform:uppercase}
+.tab.on{color:var(--go);border-bottom-color:var(--go)}
+.tab:hover:not(.on){color:var(--tx2)}
+
+/* ── MAIN ── */
+.main{max-width:860px;margin:0 auto;padding:1.25rem 1rem 5.5rem}
+.sec{display:none}.sec.on{display:block}
+
+/* ── PAGE HEADER ── */
+.ph-t{font-size:1.1rem;font-weight:800;color:var(--go2);margin-bottom:3px}
+.ph-s{font-size:12px;color:var(--tx3);margin-bottom:1.1rem}
+
+/* ── CARD ── */
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:1.1rem;margin-bottom:.9rem}
+.ct{font-size:.75rem;font-weight:700;color:var(--go2);letter-spacing:.06em;margin-bottom:.9rem;display:flex;align-items:center;gap:7px;text-transform:uppercase}
+.ct-d{width:4px;height:4px;border-radius:50%;background:var(--go);flex-shrink:0}
+
+/* ── SCORE GRID ── */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:.9rem}
+.sc{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:.75rem;text-align:center;position:relative;overflow:hidden}
+.sc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--ac,var(--go));opacity:.5}
+.sc-n{font-size:1.6rem;font-weight:800;line-height:1.1}
+.sc-l{font-size:9px;color:var(--tx3);margin-top:2px;letter-spacing:.06em;text-transform:uppercase}
+
+/* ── SCHEDULE ── */
+.sched{display:flex;flex-direction:column;gap:6px}
+.si{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:.75rem .9rem;display:flex;align-items:flex-start;gap:9px;border-left:3px solid var(--bd2);transition:all .15s;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.si.done{border-left-color:var(--te);background:var(--td)}
+.si.sad{border-left-color:var(--go)}
+.si-ck{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;transition:all .15s;background:var(--sf);color:transparent;margin-top:1px}
+.si.done .si-ck{background:var(--te);border-color:var(--te);color:#fff}
+.si-inf{flex:1;min-width:0}
+.si-n{font-size:13px;font-weight:600;color:var(--tx)}
+.si-t{font-size:11px;margin-top:1px;letter-spacing:.03em;font-weight:500}
+.si-nt{font-size:11px;color:var(--tx3);margin-top:1px}
+.si-st{font-size:11px;color:var(--go);margin-left:auto;flex-shrink:0;padding-left:6px}
+.qb{margin-top:.6rem;padding:.6rem;background:var(--sf);border-radius:var(--rx);border:1px solid var(--bd)}
+.ql{font-size:10px;color:var(--tx3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.qrow{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.qrow:last-child{margin-bottom:0}
+.qrow input[type=range]{flex:1;accent-color:var(--go);cursor:pointer;height:3px}
+.qv{font-size:12px;font-weight:700;color:var(--go);min-width:24px;text-align:right;font-family:monospace}
+
+/* ── SADHANA SCORES ── */
+.ss-g{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:.9rem}
+.ss-c{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:.9rem}
+.ss-t{font-size:10px;color:var(--go2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.6rem;font-weight:700}
+.ss-r{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.ss-r:last-child{margin-bottom:0}
+.ss-nm{font-size:11px;flex:1;color:var(--tx2)}
+.ss-in{width:48px;background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rx);padding:4px 6px;color:var(--go2);font-size:13px;font-weight:700;text-align:center;transition:border-color .15s}
+.ss-in:focus{outline:none;border-color:var(--go)}
+.ss-mx{font-size:10px;color:var(--tx3)}
+
+/* ── VIRTUE ── */
+.vg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:7px}
+.vc{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:.8rem}
+.vc-n{font-size:12px;font-weight:600;color:var(--go2);margin-bottom:2px}
+.vc-d{font-size:10px;color:var(--tx3);margin-bottom:.5rem;line-height:1.5}
+.stars{display:flex;gap:3px}
+.star{width:22px;height:22px;border-radius:4px;border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;transition:all .12s;background:var(--sf);color:var(--tx4)}
+.star.on{background:var(--gd2);border-color:var(--go);color:var(--go2)}
+
+/* ── PRINCIPLES ── */
+.pl{display:flex;flex-direction:column;gap:6px}
+.pc{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:.75rem .9rem;display:flex;align-items:flex-start;gap:9px;transition:all .15s}
+.pc.on{border-left:2px solid var(--pu);background:var(--pd)}
+.pc-ck{width:19px;height:19px;border-radius:4px;border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;font-size:9px;margin-top:1px;background:var(--sf);color:transparent;transition:all .15s}
+.pc.on .pc-ck{background:var(--pu);border-color:var(--pu);color:#fff}
+.pc-n{font-size:12px;font-weight:700;color:var(--go2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:1px}
+.pc-d{font-size:11px;color:var(--tx3);line-height:1.5}
+.rr{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:.7rem .9rem;display:flex;align-items:center;gap:9px;margin-bottom:6px;transition:all .15s}
+.rr.on{border-left:2px solid var(--te);background:var(--td)}
+.rn{font-size:11px;font-weight:700;width:20px;height:20px;border-radius:50%;background:var(--gd2);border:1px solid rgba(212,160,53,0.2);display:flex;align-items:center;justify-content:center;color:var(--go);flex-shrink:0}
+.rt{font-size:12px;color:var(--tx2);flex:1;line-height:1.5}
+.rk{width:19px;height:19px;border-radius:4px;border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:9px;background:var(--sf);color:transparent;transition:all .15s;flex-shrink:0}
+.rr.on .rk{background:var(--te);border-color:var(--te);color:#fff}
+.aff-b{background:var(--gd);border:1px solid rgba(212,160,53,0.15);border-radius:var(--r);padding:1rem;margin-bottom:.9rem}
+.aff-l{font-size:12px;font-weight:600;color:var(--go2);margin-bottom:6px;display:flex;align-items:center;gap:7px;letter-spacing:.03em}
+.aff-l:last-child{margin-bottom:0}
+.aff-l::before{content:'✦';font-size:9px;color:var(--go);flex-shrink:0}
+
+/* ── HWM ── */
+.hw-c{text-align:center;padding:.6rem 0}
+.hw-b{font-size:3rem;font-weight:800;color:var(--go);line-height:1}
+.hw-lbl{font-size:10px;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+input[type=range].hw-sl{width:100%;accent-color:var(--go);margin:.75rem 0;cursor:pointer}
+.hw-d{font-size:12px;color:var(--tx2);text-align:center;min-height:1.4em}
+
+/* ── MOOD ── */
+.mood-r{display:flex;gap:5px;flex-wrap:wrap}
+.mb{padding:4px 11px;border-radius:99px;border:1px solid var(--bd2);font-size:12px;cursor:pointer;background:var(--sf2);color:var(--tx3);transition:all .12s}
+.mb.on{background:var(--gd2);border-color:var(--go);color:var(--go2);font-weight:600}
+
+/* ── TEXTAREA / INPUT ── */
+.ta{width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:.6rem .8rem;color:var(--tx);font-size:13px;resize:vertical;line-height:1.6;transition:border-color .15s}
+.ta::placeholder{color:var(--tx4)}.ta:focus{outline:none;border-color:var(--go)}
+.ti{background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 11px;color:var(--tx);font-size:13px;transition:border-color .15s;width:100%}
+.ti:focus{outline:none;border-color:var(--go)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;border:none;border-radius:var(--rs);padding:.55rem 1.2rem;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;transition:all .15s}
+.bg{background:var(--go);color:#0a0806}.bg:hover,.bg:active{background:var(--go2)}
+.bt{background:var(--te);color:#fff}.bt:hover,.bt:active{background:var(--te2)}
+.bh{background:var(--sf2);border:1px solid var(--bd2);color:var(--tx2)}.bh:hover,.bh:active{background:var(--sf3);color:var(--tx)}
+.br{background:var(--rd);border:1px solid var(--re);color:var(--re)}
+.sm{padding:.35rem .8rem;font-size:11px}
+
+/* ── SUGGESTION BOX ── */
+.sugb{background:linear-gradient(135deg,var(--sf2),var(--sf));border:1px solid rgba(212,160,53,0.18);border-radius:var(--r);padding:1rem;margin-bottom:.9rem;position:relative;overflow:hidden}
+.sugb::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--go),transparent)}
+.sugt{font-size:10px;font-weight:700;color:var(--go);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.5rem}
+.sugbd{font-size:13px;color:var(--tx2);line-height:1.6}
+.sugis{margin-top:.5rem;display:flex;flex-direction:column;gap:4px}
+.sugi{font-size:12px;color:var(--tx);background:var(--sf);border-radius:var(--rx);padding:5px 9px;border-left:2px solid var(--go)}
+
+/* ── WEEKLY GRID ── */
+.wg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:.6rem}
+.dc{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;font-weight:600;border:1px solid var(--bd);background:var(--sf2);color:var(--tx3);cursor:pointer}
+.dc.today{border-color:var(--go);color:var(--go)}
+.dc .dc-s{font-size:12px;font-weight:700;color:var(--tx)}
+.dc[data-s=high]{background:var(--td);border-color:var(--te)}
+.dc[data-s=mid]{background:var(--gd);border-color:var(--go)}
+.dc[data-s=low]{background:var(--rd);border-color:var(--re)}
+
+/* ── PROG BARS ── */
+.pb{margin-bottom:7px}
+.pb-l{display:flex;justify-content:space-between;font-size:11px;color:var(--tx2);margin-bottom:2px}
+.pb-t{height:4px;background:var(--sf2);border-radius:99px;overflow:hidden}
+.pb-f{height:100%;border-radius:99px;background:var(--te);transition:width .4s ease}
+
+/* ── HEATMAP ── */
+.hm{display:flex;flex-wrap:wrap;gap:3px}
+.hc{width:11px;height:11px;border-radius:2px;background:var(--sf2);border:1px solid var(--bd)}
+.hc[data-l="1"]{background:rgba(212,160,53,0.16);border-color:rgba(212,160,53,0.3)}
+.hc[data-l="2"]{background:rgba(212,160,53,0.4);border-color:var(--go)}
+.hc[data-l="3"]{background:var(--go);border-color:var(--go2)}
+
+/* ── BADGE ── */
+.bg-g{display:flex;flex-wrap:wrap;gap:5px}
+.badge{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rx);padding:3px 8px;font-size:11px;color:var(--tx3)}
+.badge.on{background:var(--gd2);border-color:rgba(212,160,53,0.35);color:var(--go2);font-weight:600}
+
+/* ── CHART ── */
+.cw{position:relative;width:100%;height:190px;margin-top:.4rem}
+
+/* ── MODAL ── */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem}
+.ov.open{display:flex}
+.modal{background:var(--sf);border:1px solid var(--bd2);border-radius:var(--r);width:100%;max-width:580px;max-height:88vh;overflow-y:auto}
+.mh{padding:1rem 1.1rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--sf);z-index:1}
+.mt{font-size:.95rem;font-weight:800;color:var(--go2)}
+.mc{background:none;border:none;color:var(--tx3);font-size:1.2rem;cursor:pointer;padding:3px}
+.mc:hover{color:var(--tx)}
+.mb2{padding:1.1rem}
+
+/* ── SADHANA MODE ── */
+.sm-ov{position:fixed;inset:0;background:#050403;z-index:600;display:none;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center}
+.sm-ov.open{display:flex}
+.sm-t{font-size:1.2rem;font-weight:800;color:var(--go2);margin-bottom:.4rem;max-width:480px}
+.sm-ti{font-size:3.5rem;font-weight:800;color:var(--go);margin:1.25rem 0;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.sm-ins{background:var(--gd);border:1px solid rgba(212,160,53,0.18);border-radius:var(--r);padding:1rem;text-align:left;max-width:460px;width:100%;margin-bottom:1.25rem}
+.sm-i{font-size:12px;color:var(--go2);margin-bottom:5px;display:flex;gap:7px;line-height:1.5}
+.sm-i::before{content:'✦';color:var(--go);font-size:9px;flex-shrink:0;margin-top:2px}
+.sm-i:last-child{margin-bottom:0}
+.sm-bs{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
+
+/* ── TASKS ── */
+.ti-item{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:.7rem .9rem;display:flex;align-items:center;gap:9px;margin-bottom:6px;transition:all .15s}
+.ti-item.done-t{opacity:.5;text-decoration:line-through}
+.ti-ck{width:19px;height:19px;border-radius:4px;border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:9px;background:var(--sf);color:transparent;flex-shrink:0;transition:all .15s}
+.ti-item.done-t .ti-ck{background:var(--te);border-color:var(--te);color:#fff}
+.ti-tx{flex:1;font-size:13px;color:var(--tx)}
+.ti-sad{background:var(--gd2);border:1px solid rgba(212,160,53,0.3);border-radius:var(--rx);padding:3px 7px;font-size:10px;color:var(--go);cursor:pointer;white-space:nowrap;letter-spacing:.03em;transition:all .15s}
+.ti-sad:hover{background:var(--go);color:#0a0806}
+
+/* ── DATE NAV ── */
+.dn{display:flex;align-items:center;gap:7px;margin-bottom:1.1rem}
+.dnb{background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rx);width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--tx2);transition:all .15s}
+.dnb:hover,.dnb:active{background:var(--sf3);color:var(--tx)}
+.dn-d{font-size:13px;color:var(--go2);flex:1;text-align:center;font-weight:700;cursor:pointer}
+.dn-s{font-size:10px;color:var(--tx3);letter-spacing:.05em;text-transform:uppercase;text-align:center}
+
+/* ── CTRL BOX ── */
+.ctrl{background:var(--sf2);border-left:3px solid var(--go);border-radius:0 var(--rs) var(--rs) 0;padding:.8rem .9rem;margin-bottom:.9rem}
+.ctrl-t{font-size:10px;font-weight:700;color:var(--go);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.4rem}
+.ctrl-tx{font-size:12px;color:var(--tx2);line-height:1.7}
+
+/* ── EDIT BADGE ── */
+.eb{background:var(--gd2);border:1px solid rgba(212,160,53,0.3);border-radius:var(--rx);padding:2px 7px;font-size:10px;color:var(--go);cursor:pointer;letter-spacing:.03em;font-weight:400}
+.eb:hover{background:var(--go);color:#0a0806}
+
+/* ── CALENDAR ── */
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:.4rem}
+.cd-h{font-size:9px;color:var(--tx3);text-align:center;padding:2px 0;letter-spacing:.04em;text-transform:uppercase}
+.cc{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;background:var(--sf2);color:var(--tx3);border:1px solid transparent;transition:all .12s}
+.cc:hover{border-color:var(--go);color:var(--go)}
+.cc.today{border-color:var(--go2);color:var(--go2);font-weight:700}
+.cc.hd[data-s=high]{background:var(--td);color:var(--te2)}
+.cc.hd[data-s=mid]{background:var(--gd);color:var(--go2)}
+.cc.hd[data-s=low]{background:var(--rd);color:var(--re)}
+.cc.sel{box-shadow:0 0 0 2px var(--go)}
+.cc.om{opacity:.25}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:4.5rem;left:50%;transform:translateX(-50%) translateY(120px);background:var(--te);color:#fff;padding:.5rem 1.2rem;border-radius:99px;font-size:12px;font-weight:700;transition:transform .3s;z-index:700;white-space:nowrap;letter-spacing:.03em;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── BOTTOM NAV ── */
+.bnv{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--bd);z-index:200;height:54px;align-items:stretch}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;color:var(--tx3);font-size:9px;letter-spacing:.04em;text-transform:uppercase;transition:color .15s;border:none;background:none;padding:0}
+.bn.on{color:var(--go)}
+.bn-i{font-size:15px;line-height:1}
+
+/* ── SETTINGS ── */
+.ts{background:var(--sf2);border:1px solid var(--bd);border-radius:var(--rs);padding:.9rem;margin-bottom:.7rem}
+.ts-l{font-size:11px;font-weight:700;color:var(--go2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between}
+.ts-a{font-size:10px;color:var(--go);cursor:pointer;text-transform:uppercase}
+.te-r{display:flex;gap:5px;margin-bottom:5px;align-items:center}
+.te-r:last-child{margin-bottom:0}
+.te-d{background:var(--rd);border:1px solid var(--re);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;color:var(--re);flex-shrink:0}
+
+/* ── SYNC DOT ── */
+.sd{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:3px}
+.sd.g{background:#22c55e}
+.sd.y{background:#eab308;animation:pulse 1.5s infinite}
+.sd.r{background:var(--re)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── SPINNER ── */
+.spin{width:13px;height:13px;border:2px solid var(--bd2);border-top-color:var(--go);border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── SEP ── */
+hr{border:none;border-top:1px solid var(--bd);margin:.85rem 0}
+
+/* ── RESPONSIVE ── */
+@media(max-width:620px){
+  .bnv{display:flex}
+  .nav{display:none}
+  .main{padding-bottom:5rem}
+  .sg{grid-template-columns:repeat(2,1fr)}
+  .ss-g{grid-template-columns:1fr}
+  .vg{grid-template-columns:1fr 1fr}
+  .hw-b{font-size:2.5rem}
+  .sm-ti{font-size:2.8rem}
+}
+@media(min-width:621px){.bnv{display:none}}
+</style>
+</head>
+<body>
+
+<div id="ob">● Offline — all changes saved locally</div>
+<div id="ib"><span>📲 Install Sadhana as an app — works fully offline</span><button onclick="doInstall()">Install</button><button onclick="document.getElementById('ib').classList.remove('show')" style="background:none;border:none;color:var(--tx3);cursor:pointer;font-size:16px;padding:0">×</button></div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div>
+    <div class="logo">🕉 Sadhana</div>
+    <div class="logo-s">Daily Practice Tracker</div>
+  </div>
+  <div class="hr">
+    <div id="syncBtn" class="hb sync" onclick="openDriveModal()"><span class="sd y" id="sd"></span><span id="sl">Drive</span></div>
+    <div class="hb" onclick="exportData()">Export</div>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+    <div class="hb" onclick="document.getElementById('importFile').click()">Import</div>
+    <div class="dp" id="hDate" onclick="showTab(null,'calendar')">—</div>
+  </div>
+</div>
+
+<div class="tkr"><span class="tkr-i" id="tkr">Loading...</span></div>
+
+<nav class="nav" id="nav">
+  <div class="tab on" onclick="showTab(this,'today')">Today</div>
+  <div class="tab" onclick="showTab(this,'sadhana')">Sadhana</div>
+  <div class="tab" onclick="showTab(this,'virtues')">Virtues</div>
+  <div class="tab" onclick="showTab(this,'principles')">Principles</div>
+  <div class="tab" onclick="showTab(this,'tasks')">Tasks</div>
+  <div class="tab" onclick="showTab(this,'weekly')">Weekly</div>
+  <div class="tab" onclick="showTab(this,'progress')">Progress</div>
+  <div class="tab" onclick="showTab(this,'calendar')">Calendar</div>
+  <div class="tab" onclick="showTab(this,'settings')">Settings</div>
+</nav>
+
+<main class="main">
+
+<!-- TODAY -->
+<section class="sec on" id="today">
+  <div class="dn">
+    <div class="dnb" onclick="chDate(-1)">‹</div>
+    <div>
+      <div class="dn-d" id="vDate" onclick="showTab(null,'calendar')">—</div>
+      <div class="dn-s" id="vDateS">—</div>
+    </div>
+    <div class="dnb" onclick="chDate(1)">›</div>
+  </div>
+  <div class="sugb">
+    <div class="sugt">⚡ Today's Guidance from Your Practice</div>
+    <div class="sugbd" id="sugBd">Loading...</div>
+    <div class="sugis" id="sugIs"></div>
+  </div>
+  <div class="sg">
+    <div class="sc" style="--ac:var(--go)"><div class="sc-n" id="sc_tot" style="color:var(--go)">—</div><div class="sc-l">Total Score</div></div>
+    <div class="sc" style="--ac:var(--te)"><div class="sc-n" id="sc_st" style="color:var(--te)">0</div><div class="sc-l">Day Streak</div></div>
+    <div class="sc" style="--ac:var(--pu)"><div class="sc-n" id="sc_dn" style="color:var(--pu)">0/6</div><div class="sc-l">Blocks Done</div></div>
+    <div class="sc" style="--ac:var(--go2)"><div class="sc-n" id="sc_hw" style="color:var(--go2)">—</div><div class="sc-l">HWM Rating</div></div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d"></div>Daily Schedule <span class="eb" onclick="showTab(null,'settings')">Edit</span></div>
+    <div class="sched" id="schedList"></div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:var(--go2)"></div>Honest · Work · Mindfulness</div>
+    <div class="hw-c"><div class="hw-b" id="hwN">5</div><div class="hw-lbl">/ 10</div></div>
+    <input type="range" class="hw-sl" min="1" max="10" value="5" id="hwSl" step="1" oninput="setHW(this.value)">
+    <div class="hw-d" id="hwD"></div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:var(--bl)"></div>Mood & Energy</div>
+    <div class="ql" style="margin-bottom:5px">Mood</div>
+    <div class="mood-r" id="moodR">
+      <div class="mb" onclick="setMood('Restless')">Restless</div>
+      <div class="mb" onclick="setMood('Low')">Low</div>
+      <div class="mb" onclick="setMood('Neutral')">Neutral</div>
+      <div class="mb" onclick="setMood('Calm')">Calm</div>
+      <div class="mb" onclick="setMood('Joyful')">Joyful</div>
+      <div class="mb" onclick="setMood('Divine')">Divine</div>
+    </div>
+    <hr>
+    <div class="ql" style="margin-bottom:3px">Energy</div>
+    <div class="qrow"><input type="range" min="1" max="10" value="5" step="1" id="enSl" oninput="setEn(this.value)"><span class="qv" id="enV">5</span></div>
+    <div class="ql" style="margin-top:5px;margin-bottom:3px">Focus</div>
+    <div class="qrow"><input type="range" min="1" max="10" value="5" step="1" id="foSl" oninput="setFo(this.value)"><span class="qv" id="foV">5</span></div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:#5a7a4a"></div>Evening Reflection</div>
+    <div class="ql" style="margin-bottom:4px">What did I do as Sadhana today?</div>
+    <textarea class="ta" id="refS" rows="2" placeholder="Which action did I perform as divine offering..."></textarea>
+    <div class="ql" style="margin-top:9px;margin-bottom:4px">Where did I break discipline?</div>
+    <textarea class="ta" id="refB" rows="2" placeholder="Honest witness. No judgment. Just truth..."></textarea>
+    <div class="ql" style="margin-top:9px;margin-bottom:4px">Tomorrow's most important action</div>
+    <textarea class="ta" id="refT" rows="2" placeholder="One thing done perfectly is tomorrow's victory..."></textarea>
+    <div style="margin-top:.8rem;display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn bg" onclick="saveDay()">Save Day ✓</button>
+      <button class="btn bh" onclick="genSug()">↻ Refresh Guidance</button>
+    </div>
+  </div>
+</section>
+
+<!-- SADHANA SCORES -->
+<section class="sec" id="sadhana">
+  <div class="ph-t">Sadhana Quality Scores</div>
+  <div class="ph-s">Be honest. Maa sees everything. Score for Her, not anyone else.</div>
+  <div class="ss-g" id="sadGrid"></div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:var(--pu)"></div>Today's Radar</div>
+    <div class="cw" style="height:230px"><canvas id="sadRadar"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d"></div>Session Notes</div>
+    <div class="ql" style="margin-bottom:4px">Morning Sadhana (3am–7am) — What arose?</div>
+    <textarea class="ta" id="nM" rows="3" placeholder="Describe your state, depth, blocks, breakthroughs..."></textarea>
+    <div class="ql" style="margin-top:9px;margin-bottom:4px">Evening Sadhana (7pm–8:30pm)</div>
+    <textarea class="ta" id="nE" rows="3" placeholder="Quality of presence, how was the return..."></textarea>
+  </div>
+  <button class="btn bg" onclick="saveSadhana()">Save Scores ✓</button>
+</section>
+
+<!-- VIRTUES -->
+<section class="sec" id="virtues">
+  <div class="ph-t">Virtue & Moral Conduct</div>
+  <div class="ph-s">Rate yourself honestly. This is your inner report card.</div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:var(--go2)"></div>Core Virtues — Rate Today (1–5)</div>
+    <div class="vg" id="virtGrid"></div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:var(--re)"></div>Moral Conduct — Did I act with integrity?</div>
+    <div id="moralList"></div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:var(--pu)"></div>Virtue Radar</div>
+    <div class="cw" style="height:230px"><canvas id="virtRadar"></canvas></div>
+  </div>
+  <button class="btn bg" onclick="saveVirtues()">Save Virtues ✓</button>
+</section>
+
+<!-- PRINCIPLES -->
+<section class="sec" id="principles">
+  <div class="ph-t">Principles & Rules</div>
+  <div class="ph-s">Check each principle you lived today. Be ruthlessly honest.</div>
+  <div class="ctrl">
+    <div class="ctrl-t">Control the Controllables</div>
+    <div class="ctrl-tx">What am I doing right now? → Do it fully.<br>If it is in my control → do it perfectly.<br>If it is not in my control → release it completely.<br>Meditation is just returning — again and again. That IS the practice.</div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:var(--pu)"></div>My Principles — Did I live them today?</div>
+    <div class="pl" id="princList"></div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d"></div>The Rules — Did I follow them?</div>
+    <div id="rulesList"></div>
+  </div>
+  <div class="aff-b" id="affBox"></div>
+  <button class="btn bg" onclick="savePrinciples()">Save ✓</button>
+</section>
+
+<!-- TASKS -->
+<section class="sec" id="tasks">
+  <div class="ph-t">Sadhana Tasks</div>
+  <div class="ph-s">Every task can become a sadhana. Add it, then do it as divine work.</div>
+  <div class="card">
+    <div class="ct"><div class="ct-d"></div>Add Task</div>
+    <div style="display:flex;gap:7px;margin-bottom:.4rem">
+      <input type="text" class="ti" id="taskIn" placeholder="What is the task?" style="flex:1">
+      <button class="btn bg sm" onclick="addTask()">Add</button>
+    </div>
+    <div style="font-size:11px;color:var(--tx3)">Press "🕉 Sadhana" to enter full-focus sacred mode for any task.</div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:var(--te)"></div>Today's Tasks</div>
+    <div id="taskList"></div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:var(--go2)"></div>The Sadhana Method for Any Work</div>
+    <div style="background:var(--gd);border-radius:var(--rs);padding:.9rem;border-left:3px solid var(--go)">
+      <div id="sadMethod" style="font-size:12px;color:var(--tx2);line-height:1.8"></div>
+    </div>
+  </div>
+</section>
+
+<!-- WEEKLY -->
+<section class="sec" id="weekly">
+  <div class="ph-t">Weekly Summary</div><div class="ph-s">Seven days. Seven opportunities.</div>
+  <div class="card">
+    <div class="ct"><div class="ct-d"></div>This Week</div>
+    <div class="wg" id="wkGrid"></div>
+    <div style="display:flex;gap:10px;font-size:10px;color:var(--tx3)"><span>🟢 ≥75</span><span>🟡 50–74</span><span>🔴 &lt;50</span></div>
+  </div>
+  <div class="card"><div class="ct"><div class="ct-d"></div>Schedule Completion</div><div id="wkSched"></div></div>
+  <div class="card"><div class="ct"><div class="ct-d" style="background:var(--pu)"></div>Sadhana Quality Trend</div><div class="cw"><canvas id="wkChart"></canvas></div></div>
+  <div class="card"><div class="ct"><div class="ct-d" style="background:var(--go2)"></div>Virtue Radar — Weekly Average</div><div class="cw" style="height:230px"><canvas id="wkRadar"></canvas></div></div>
+</section>
+
+<!-- PROGRESS -->
+<section class="sec" id="progress">
+  <div class="ph-t">Progress</div><div class="ph-s">Every day tracked is a step closer to Maa.</div>
+  <div class="sg">
+    <div class="sc" style="--ac:var(--go)"><div class="sc-n" id="p_d" style="color:var(--go)">0</div><div class="sc-l">Days Tracked</div></div>
+    <div class="sc" style="--ac:var(--te)"><div class="sc-n" id="p_b" style="color:var(--te)">0</div><div class="sc-l">Best Streak</div></div>
+    <div class="sc" style="--ac:var(--pu)"><div class="sc-n" id="p_a" style="color:var(--pu)">—</div><div class="sc-l">Avg Score</div></div>
+    <div class="sc" style="--ac:var(--go2)"><div class="sc-n" id="p_q" style="color:var(--go2)">—</div><div class="sc-l">Avg Morning Q</div></div>
+  </div>
+  <div class="card"><div class="ct"><div class="ct-d"></div>Activity Heatmap (90 Days)</div><div class="hm" id="hmap"></div><div style="display:flex;gap:6px;margin-top:7px;font-size:10px;color:var(--tx3);align-items:center">Less <span style="display:flex;gap:2px"><span style="width:10px;height:10px;border-radius:2px;background:var(--sf2);border:1px solid var(--bd);display:inline-block"></span><span style="width:10px;height:10px;border-radius:2px;background:rgba(212,160,53,0.18);display:inline-block"></span><span style="width:10px;height:10px;border-radius:2px;background:rgba(212,160,53,0.4);display:inline-block"></span><span style="width:10px;height:10px;border-radius:2px;background:var(--go);display:inline-block"></span></span> More</div></div>
+  <div class="card"><div class="ct"><div class="ct-d"></div>30-Day Score Trend</div><div class="cw"><canvas id="trChart"></canvas></div></div>
+  <div class="card"><div class="ct"><div class="ct-d" style="background:var(--go2)"></div>Sadhana Score History (14 days)</div><div class="cw"><canvas id="sadHist"></canvas></div></div>
+  <div class="card"><div class="ct"><div class="ct-d" style="background:var(--pu)"></div>Virtue Trends (14 days)</div><div class="cw"><canvas id="virtHist"></canvas></div></div>
+  <div class="card"><div class="ct"><div class="ct-d" style="background:var(--go2)"></div>Achievements</div><div class="bg-g" id="bdgGrid"></div></div>
+</section>
+
+<!-- CALENDAR -->
+<section class="sec" id="calendar">
+  <div class="ph-t">Calendar</div><div class="ph-s">Navigate your journey day by day.</div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+      <div class="dnb" onclick="calNav(-1)">‹</div>
+      <div style="font-size:13px;font-weight:700;color:var(--go2)" id="calTit"></div>
+      <div class="dnb" onclick="calNav(1)">›</div>
+    </div>
+    <div class="cg" id="calHdr"></div>
+    <div class="cg" id="calGrid"></div>
+    <div style="display:flex;gap:8px;margin-top:.6rem;font-size:10px;color:var(--tx3)"><span>🟢 High</span><span>🟡 Mid</span><span>🔴 Low</span></div>
+  </div>
+  <div class="card" id="calDayCard" style="display:none">
+    <div class="ct" id="calDayTit"><div class="ct-d"></div></div>
+    <div id="calDayCnt"></div>
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section class="sec" id="settings">
+  <div class="ph-t">Settings & Templates</div><div class="ph-s">Customize your tracker. Changes apply immediately.</div>
+  <div class="card"><div class="ct"><div class="ct-d"></div>Schedule Blocks <span class="eb" onclick="addSched()">+ Add</span></div><div id="schedEd"></div></div>
+  <div class="card"><div class="ct"><div class="ct-d" style="background:var(--pu)"></div>Principles <span class="eb" onclick="addPrinc()">+ Add</span></div><div id="princEd"></div></div>
+  <div class="card"><div class="ct"><div class="ct-d" style="background:var(--go2)"></div>Affirmations <span class="eb" onclick="addAff()">+ Add</span></div><div id="affEd"></div></div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:var(--te)"></div>Google Drive Sync</div>
+    <div style="font-size:12px;color:var(--tx2);margin-bottom:.75rem;line-height:1.7">Connect Google Drive to back up your data. Works offline — syncs automatically when internet is available. Your data is stored as a private JSON file in your Drive.</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn bt sm" onclick="initDrive()">Connect Google Drive</button>
+      <button class="btn bh sm" onclick="manualSync()">Sync Now</button>
+    </div>
+    <div style="margin-top:.6rem;font-size:11px;color:var(--tx3)" id="drStatus">Not connected</div>
+  </div>
+  <div class="card">
+    <div class="ct"><div class="ct-d" style="background:var(--re)"></div>Data</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn bh sm" onclick="exportData()">📥 Export JSON</button>
+      <button class="btn bh sm" onclick="document.getElementById('importFile').click()">📤 Import JSON</button>
+      <button class="btn br sm" onclick="clearData()">🗑 Clear All</button>
+    </div>
+    <div style="font-size:11px;color:var(--tx3);margin-top:.5rem">All data is stored in your browser's IndexedDB — works fully offline forever.</div>
+  </div>
+  <button class="btn bg" style="margin-top:.5rem" id="saveTplBtn" onclick="saveTpl()">Save Template Changes ✓</button>
+</section>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<div class="bnv">
+  <button class="bn on" onclick="showTab(this,'today')" data-tab="today"><span class="bn-i">🕉</span>Today</button>
+  <button class="bn" onclick="showTab(this,'sadhana')" data-tab="sadhana"><span class="bn-i">◎</span>Sadhana</button>
+  <button class="bn" onclick="showTab(this,'tasks')" data-tab="tasks"><span class="bn-i">✦</span>Tasks</button>
+  <button class="bn" onclick="showTab(this,'weekly')" data-tab="weekly"><span class="bn-i">▦</span>Weekly</button>
+  <button class="bn" onclick="showTab(this,'progress')" data-tab="progress"><span class="bn-i">◈</span>Progress</button>
+</div>
+
+<!-- SADHANA MODE -->
+<div class="sm-ov" id="smOv">
+  <div style="font-size:10px;color:var(--go);letter-spacing:.18em;text-transform:uppercase;margin-bottom:.8rem">🕉 Sadhana Mode</div>
+  <div class="sm-t" id="smTask"></div>
+  <div style="font-size:11px;color:var(--tx3);margin-bottom:.4rem">Elapsed time</div>
+  <div class="sm-ti" id="smTi">00:00:00</div>
+  <div class="sm-ins" id="smIns"></div>
+  <div class="sm-bs">
+    <button class="btn bh" id="smPBtn" onclick="pauseSM()">Pause</button>
+    <button class="btn bg" onclick="completeSM()">Complete Task ✓</button>
+    <button class="btn bh" onclick="closeSM()">Cancel</button>
+  </div>
+</div>
+
+<!-- DRIVE MODAL -->
+<div class="ov" id="drModal">
+  <div class="modal">
+    <div class="mh"><div class="mt">Google Drive Sync</div><button class="mc" onclick="closeModal('drModal')">×</button></div>
+    <div class="mb2">
+      <div style="font-size:12px;color:var(--tx2);line-height:1.7;margin-bottom:.9rem">
+        To sync to Google Drive, you need a Google OAuth Client ID. This is a one-time setup.<br><br>
+        <strong style="color:var(--go)">Quick Setup:</strong><br>
+        1. Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a><br>
+        2. Create project → Enable Google Drive API<br>
+        3. Create OAuth 2.0 credentials (Web Application)<br>
+        4. Add your site URL to Authorized Origins<br>
+        5. Enter your Client ID below
+      </div>
+      <div id="drModalCnt">
+        <div style="margin-bottom:.75rem">
+          <div class="ql" style="margin-bottom:4px">Google OAuth Client ID</div>
+          <input type="text" class="ti" id="clientIdIn" placeholder="xxxxxxxxxxxx.apps.googleusercontent.com">
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <button class="btn bt" onclick="connectDrive()">Connect Drive</button>
+          <button class="btn bh" onclick="closeModal('drModal')">Cancel</button>
+        </div>
+        <hr>
+        <div style="background:var(--gd);border-radius:var(--rs);padding:.8rem;margin-top:.4rem">
+          <div style="font-size:11px;color:var(--go2);font-weight:600;margin-bottom:.4rem">No setup? Use Export/Import instead</div>
+          <div style="font-size:11px;color:var(--tx2);line-height:1.6">Click <strong>Export JSON</strong> → save to your Google Drive manually → use <strong>Import JSON</strong> on any device. Works just as well!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+// CHART.JS — loaded inline for full offline support
+// ══════════════════════════════════════════════════
+// We'll lazy-load Chart.js from CDN with offline fallback
+(function loadChartJs() {
+  if(window.Chart) return;
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+  s.onerror = () => { window._chartFailed = true; };
+  document.head.appendChild(s);
+})();
+
+// ══════════════════════════════════════════════════
+// SERVICE WORKER — full offline support
+// ══════════════════════════════════════════════════
+if('serviceWorker' in navigator) {
+  const SW = `
+const CACHE='sadhana-v3';
+const ASSETS=[self.location.href];
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)));
+  self.skipWaiting();
+});
+self.addEventListener('activate',e=>{
+  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+  self.clients.claim();
+});
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET')return;
+  const url=e.request.url;
+  if(url.includes('googleapis.com')||url.includes('accounts.google.com')){
+    e.respondWith(fetch(e.request).catch(()=>new Response('',{status:503})));
+    return;
+  }
+  e.respondWith(
+    caches.match(e.request).then(cached=>{
+      const fetchPromise=fetch(e.request).then(res=>{
+        if(res.status===200){
+          const clone=res.clone();
+          caches.open(CACHE).then(c=>c.put(e.request,clone));
+        }
+        return res;
+      }).catch(()=>cached);
+      return cached||fetchPromise;
+    })
+  );
+});`;
+  const blob = new Blob([SW], {type:'text/javascript'});
+  const url = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).catch(()=>{});
+}
+
+// ══════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════
+const DS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DB_NAME='SadhanaDB2';
+const DB_VER=2;
+const HWD=['','Barely present — mind scattered','','Mostly distracted','','Some honest effort, but gaps','','Good solid effort, mostly mindful','','Strong, focused work','Pure flow — full presence all day'];
+
+const DEF = {
+  schedule:[
+    {id:'sad1',name:'Kundalini Sadhana',time:'3:00 AM – 7:00 AM',note:'Morning practice — the most sacred 4 hours',color:'var(--go)',isSadhana:true},
+    {id:'ex',name:'Exercise',time:'7:00 AM – 8:00 AM',note:'20 minutes minimum — body as temple',color:'var(--te)',isSadhana:false},
+    {id:'st1',name:'Book Reading / Study',time:'8:00 AM – 9:00 AM',note:'25 pages minimum — feed the mind',color:'var(--pu)',isSadhana:false},
+    {id:'st2',name:'Book Reading / Study',time:'4:00 PM – 7:00 PM',note:'Deep study — 10 pages before sleep',color:'var(--pu)',isSadhana:false},
+    {id:'sad2',name:'Kundalini Meditation',time:'7:00 PM – 8:30 PM',note:'Evening session — quality presence',color:'var(--go2)',isSadhana:true},
+    {id:'slp',name:'Sleep',time:'8:30 PM – 3:00 AM',note:'Sacred rest — protect the sleep window',color:'var(--tx3)',isSadhana:false},
+  ],
+  sadhanaScores:[
+    {id:'q1',name:'Quality — Morning',max:60,session:1,isBlock:false},
+    {id:'b1',name:'Blocks — Morning',max:60,session:1,isBlock:true},
+    {id:'q2',name:'Quality — Evening',max:60,session:2,isBlock:false},
+    {id:'b2',name:'Blocks — Evening',max:60,session:2,isBlock:true},
+  ],
+  virtues:[
+    {id:'mind',name:'Mindfulness',desc:'Presence in thought, word, and action'},
+    {id:'ten',name:'Tenacity',desc:'Persisting when it is hard and uncomfortable'},
+    {id:'hon',name:'Honesty',desc:'Truth in speech and in self-perception'},
+    {id:'dis',name:'Discipline',desc:'Doing what must be done, without shortcuts'},
+    {id:'com',name:'Compassion',desc:'Genuine care for others, without superiority'},
+    {id:'equ',name:'Equanimity',desc:'Steadiness when circumstances are unsteady'},
+  ],
+  moralChecks:[
+    {id:'nolie',name:'I spoke only truth today'},
+    {id:'pat',name:'I responded with patience, not irritation'},
+    {id:'noharm',name:'I caused no deliberate harm in word, act, or thought'},
+    {id:'nowaste',name:'I did not waste time in idleness or distraction'},
+    {id:'sadact',name:'I performed at least one action as sadhana — fully, no ego'},
+    {id:'nogreed',name:'I acted without greed or craving for result'},
+  ],
+  principles:[
+    {id:'mind',name:'Mindfulness',desc:'What am I doing right now? Am I fully present?'},
+    {id:'com',name:'Compassion',desc:'Am I being compassionate — in word, thought, action?'},
+    {id:'truth',name:'Truthfulness',desc:'Am I being honest — with others and with myself?'},
+    {id:'ten',name:'Tenacity',desc:'Did I refuse to give up when it was hard?'},
+    {id:'dis',name:'Discipline',desc:'Did I do what I said I would do — at any cost?'},
+  ],
+  rules:[
+    'Wake at 3 AM. Do not go back to sleep. Take bath. Meditate till 7 AM.',
+    'Exercise every morning at 7 AM for 20 minutes minimum.',
+    'Read 25 pages at 8 AM without fail.',
+    'Read 10 pages before sleep and meditate at least 5 minutes.',
+    'Be mindful, disciplined, compassionate, honest — and never give up.',
+  ],
+  affirmations:['I AM DISCIPLINED','I AM GETTING CLOSER TO MAA WITH EACH CHANT','I AM POWERFUL',"I AM MAA'S SERVANT",'I AM UNSTOPPABLE','I AM SUCCESS','I AM COMPASSIONATE','I LOVE WORKING HARD','I AM FOCUSED','I AM A BILLIONAIRE','I AM EXECUTING PERFECTLY'],
+  sadhanaMethod:[
+    'Once the work begins — do NOT get up until it is complete.',
+    'Sit with straight back. Phone face down, away from reach.',
+    'Do not give up, do not get distracted, do not let the mind wander.',
+    'Be mindful of what you are doing at every moment — what is happening right now?',
+    'Treat this work as divine offering. You are doing it for Maa, not for yourself.',
+    'When the mind moves away — gently, firmly bring it back. No frustration.',
+    'Work in silence or with gentle chant. No music, no notifications.',
+    'Only after the work is fully complete — completely finished — get up.',
+    'This is your sadhana. This is your worship. Do it with that quality.',
+  ]
+};
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+let db=null, allData={}, tmpl=null, viewDate=new Date().toISOString().split('T')[0];
+let calDate=new Date(), smInt=null, smSec=0, smPaused=false, smTaskName='';
+let chartInsts={}, installPrompt=null;
+let driveToken=null, driveFileId=localStorage.getItem('sad_dfid')||null, syncTimer=null;
+
+// ══════════════════════════════════════════════════
+// INDEXEDDB
+// ══════════════════════════════════════════════════
+function initDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(DB_NAME,DB_VER);
+    r.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('days'))d.createObjectStore('days',{keyPath:'date'});
+      if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'key'});
+    };
+    r.onsuccess=e=>{db=e.target.result;res(db);};
+    r.onerror=rej;
+  });
+}
+function dbGet(s,k){return new Promise((res,rej)=>{const t=db.transaction(s,'readonly'),r=t.objectStore(s).get(k);r.onsuccess=()=>res(r.result);r.onerror=rej;})}
+function dbPut(s,v){return new Promise((res,rej)=>{const t=db.transaction(s,'readwrite'),r=t.objectStore(s).put(v);r.onsuccess=()=>res(r.result);r.onerror=rej;})}
+function dbAll(s){return new Promise((res,rej)=>{const t=db.transaction(s,'readonly'),r=t.objectStore(s).getAll();r.onsuccess=()=>res(r.result);r.onerror=rej;})}
+function dbDel(s,k){return new Promise((res,rej)=>{const t=db.transaction(s,'readwrite'),r=t.objectStore(s).delete(k);r.onsuccess=()=>res(r.result);r.onerror=rej;})}
+
+async function loadAll(){
+  const days=await dbAll('days');
+  allData={};
+  days.forEach(d=>allData[d.date]=d);
+  const tr=await dbGet('meta','template');
+  tmpl=(tr&&tr.value)?tr.value:JSON.parse(JSON.stringify(DEF));
+  const ts=await dbGet('meta','tasks');
+  window._tasks=ts?ts.value:{};
+}
+
+function getDay(date){
+  if(!allData[date])allData[date]={date,schedule:{},sadhana:{q1:0,b1:0,q2:0,b2:0},hw:5,mood:'',energy:5,focus:5,virtues:{},moral:{},principles:{},rules:{},refS:'',refB:'',refT:'',nM:'',nE:'',score:0};
+  return allData[date];
+}
+
+// ══════════════════════════════════════════════════
+// SAVE FUNCTIONS
+// ══════════════════════════════════════════════════
+async function saveDay(quiet){
+  const T=getDay(viewDate);
+  T.refS=g('refS').value; T.refB=g('refB').value; T.refT=g('refT').value;
+  calcScore(viewDate); await dbPut('days',T);
+  if(!quiet)toast('Day saved ✓'); schSync();
+}
+async function saveSadhana(){
+  const T=getDay(viewDate);
+  T.nM=g('nM').value; T.nE=g('nE').value;
+  calcScore(viewDate); await dbPut('days',T); toast('Scores saved ✓'); schSync();
+}
+async function saveVirtues(){calcScore(viewDate);await dbPut('days',getDay(viewDate));toast('Virtues saved ✓');schSync();}
+async function savePrinciples(){await dbPut('days',getDay(viewDate));toast('Principles saved ✓');schSync();}
+async function saveTpl(){await dbPut('meta',{key:'template',value:tmpl});toast('Template saved ✓');g('tkr').textContent=tmpl.affirmations.join('   ✦   ');}
+async function saveTasks(){await dbPut('meta',{key:'tasks',value:window._tasks||{}});}
+
+// ══════════════════════════════════════════════════
+// SCORE CALC
+// ══════════════════════════════════════════════════
+function calcScore(date){
+  const T=getDay(date),S=tmpl.schedule;
+  const done=S.filter(s=>T.schedule[s.id]?.done).length;
+  const qSum=S.filter(s=>T.schedule[s.id]?.done).reduce((a,s)=>a+(T.schedule[s.id]?.quality||5),0);
+  const qAvg=done>0?qSum/done:5;
+  const q1=T.sadhana.q1||0,b1=T.sadhana.b1||0,q2=T.sadhana.q2||0,b2=T.sadhana.b2||0;
+  const sadScore=(q1/60)*22+((60-b1)/60)*8+(q2/60)*12+((60-b2)/60)*5;
+  const vSum=tmpl.virtues.reduce((a,v)=>a+(T.virtues[v.id]||0),0);
+  const vAvg=vSum/tmpl.virtues.length;
+  const mDone=tmpl.moralChecks.filter(m=>T.moral[m.id]).length;
+  const pDone=tmpl.principles.filter(p=>T.principles[p.id]).length;
+  const rDone=tmpl.rules.filter((_,i)=>T.rules[i]).length;
+  T.score=Math.min(Math.round((done/S.length)*18+(qAvg/10)*7+sadScore+(T.hw/10)*12+(vAvg/5)*12+(mDone/tmpl.moralChecks.length)*7+(pDone/tmpl.principles.length)*7+(rDone/tmpl.rules.length)*5),100);
+  T.vAvg=vAvg; return T.score;
+}
+
+// ══════════════════════════════════════════════════
+// STREAK
+// ══════════════════════════════════════════════════
+function getStreak(asOf){
+  let n=0; const d=new Date(asOf);
+  for(let i=0;i<1000;i++){const k=d.toISOString().split('T')[0];if(allData[k]?.score>0){n++;d.setDate(d.getDate()-1);}else break;}
+  return n;
+}
+function habitStreak(id){
+  let n=0; const d=new Date(); d.setDate(d.getDate()-1);
+  for(let i=0;i<365;i++){const k=d.toISOString().split('T')[0];if(allData[k]?.schedule?.[id]?.done){n++;d.setDate(d.getDate()-1);}else break;}
+  return n;
+}
+
+// ══════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════
+function g(id){return document.getElementById(id);}
+function toast(msg,dur=2500){const t=g('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),dur);}
+function showTab(btn,id){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));
+  g(id).classList.add('on');
+  if(btn){btn.classList.add('on');document.querySelectorAll(`[data-tab="${id}"]`).forEach(b=>b.classList.add('on'));}
+  const renders={today:renderToday,sadhana:()=>{renderSadhana();setTimeout(renderSadRadar,100);},virtues:()=>{renderVirtues();setTimeout(renderVirtRadar,100);},principles:renderPrinciples,tasks:renderTasks,weekly:renderWeekly,progress:renderProgress,calendar:renderCalendar,settings:renderSettings};
+  if(renders[id])renders[id]();
+}
+function chDate(d){
+  const dt=new Date(viewDate); dt.setDate(dt.getDate()+d);
+  if(dt>new Date())return;
+  viewDate=dt.toISOString().split('T')[0]; renderToday();
+}
+function updateDateDisp(){
+  const d=new Date(viewDate+'T12:00:00'),td=new Date().toISOString().split('T')[0];
+  g('vDate').textContent=DS[d.getDay()]+', '+MS[d.getMonth()]+' '+d.getDate();
+  g('vDateS').textContent=viewDate===td?'TODAY':viewDate;
+  g('hDate').textContent=MS[d.getMonth()]+' '+d.getDate();
+}
+function destroyChart(id){if(chartInsts[id]){chartInsts[id].destroy();chartInsts[id]=null;}}
+function mkChart(id,cfg){if(!window.Chart||window._chartFailed)return;destroyChart(id);const ctx=g(id);if(!ctx)return;chartInsts[id]=new Chart(ctx,cfg);}
+
+// ══════════════════════════════════════════════════
+// RENDER TODAY
+// ══════════════════════════════════════════════════
+function renderToday(){
+  updateDateDisp();
+  const T=getDay(viewDate); calcScore(viewDate);
+  g('sc_tot').textContent=T.score||'—';
+  g('sc_dn').textContent=tmpl.schedule.filter(s=>T.schedule[s.id]?.done).length+'/'+tmpl.schedule.length;
+  g('sc_hw').textContent=T.hw;
+  g('sc_st').textContent=getStreak(viewDate);
+  g('schedList').innerHTML=tmpl.schedule.map(s=>{
+    const done=T.schedule[s.id]?.done||false, q=T.schedule[s.id]?.quality||5, st=habitStreak(s.id);
+    return `<div class="si${done?' done':''}${s.isSadhana?' sad':''}" onclick="togSched('${s.id}')">
+      <div class="si-ck">${done?'✓':''}</div>
+      <div class="si-inf">
+        <div class="si-n">${s.name}</div>
+        <div class="si-t" style="color:${s.color}">${s.time}</div>
+        <div class="si-nt">${s.note}</div>
+        <div class="qb" id="qb_${s.id}" style="display:${done?'block':'none'}" onclick="event.stopPropagation()">
+          <div class="ql">Quality of this block</div>
+          <div class="qrow"><input type="range" min="1" max="10" value="${q}" step="1" oninput="setSchedQ('${s.id}',this.value)"><span class="qv" id="qv_${s.id}">${q}</span></div>
+        </div>
+      </div>
+      <div class="si-st">${st>0?'🔥'+st:''}</div>
+    </div>`;
+  }).join('');
+  g('hwSl').value=T.hw||5; setHWDisp(T.hw||5);
+  document.querySelectorAll('.mb').forEach(b=>b.classList.toggle('on',b.textContent===T.mood));
+  g('enSl').value=T.energy||5; g('enV').textContent=T.energy||5;
+  g('foSl').value=T.focus||5; g('foV').textContent=T.focus||5;
+  g('refS').value=T.refS||''; g('refB').value=T.refB||''; g('refT').value=T.refT||'';
+  genSug();
+}
+
+function togSched(id){
+  const T=getDay(viewDate);
+  if(!T.schedule[id])T.schedule[id]={done:false,quality:5};
+  T.schedule[id].done=!T.schedule[id].done;
+  calcScore(viewDate); dbPut('days',T); renderToday();
+}
+function setSchedQ(id,val){
+  const T=getDay(viewDate);
+  if(!T.schedule[id])T.schedule[id]={done:true,quality:5};
+  T.schedule[id].quality=parseInt(val); g('qv_'+id).textContent=val;
+  calcScore(viewDate); dbPut('days',T);
+}
+function setHW(val){const T=getDay(viewDate);T.hw=parseInt(val);setHWDisp(val);calcScore(viewDate);g('sc_tot').textContent=T.score||'—';g('sc_hw').textContent=val;dbPut('days',T);}
+function setHWDisp(v){g('hwN').textContent=v;g('hwD').textContent=HWD[parseInt(v)]||'';}
+function setMood(m){const T=getDay(viewDate);T.mood=m;document.querySelectorAll('.mb').forEach(b=>b.classList.toggle('on',b.textContent===m));dbPut('days',T);}
+function setEn(v){const T=getDay(viewDate);T.energy=parseInt(v);g('enV').textContent=v;dbPut('days',T);}
+function setFo(v){const T=getDay(viewDate);T.focus=parseInt(v);g('foV').textContent=v;dbPut('days',T);}
+
+// ══════════════════════════════════════════════════
+// GUIDANCE (offline algorithm)
+// ══════════════════════════════════════════════════
+function genSug(){
+  const T=getDay(viewDate),tod=new Date().toISOString().split('T')[0];
+  const keys=Object.keys(allData).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)&&k<tod).sort().slice(-14);
+  const streak=getStreak(viewDate);
+  const avgSc=keys.length?Math.round(keys.reduce((a,k)=>a+(allData[k]?.score||0),0)/keys.length):0;
+  const avgQ1=keys.filter(k=>allData[k]?.sadhana?.q1).reduce((a,k)=>a+(allData[k].sadhana.q1||0),0)/(keys.filter(k=>allData[k]?.sadhana?.q1).length||1);
+  const avgB1=keys.filter(k=>allData[k]?.sadhana?.b1).reduce((a,k)=>a+(allData[k].sadhana.b1||0),0)/(keys.filter(k=>allData[k]?.sadhana?.b1).length||1);
+  const vAvgs={};
+  tmpl.virtues.forEach(v=>{const vals=keys.map(k=>allData[k]?.virtues?.[v.id]||0).filter(x=>x>0);vAvgs[v.id]=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;});
+  const weak=tmpl.virtues.slice().sort((a,b)=>(vAvgs[a.id]||0)-(vAvgs[b.id]||0))[0];
+  const hmisses={};
+  tmpl.schedule.forEach(s=>{hmisses[s.id]=keys.filter(k=>!allData[k]?.schedule?.[s.id]?.done).length;});
+  const mostMissed=tmpl.schedule.slice().sort((a,b)=>(hmisses[b.id]||0)-(hmisses[a.id]||0))[0];
+  const h=new Date().getHours(),dow=new Date().getDay();
+  let msg='',items=[];
+  if(streak===0)msg='Today is your day to begin again. Every master was once a beginner. The only requirement is to start.';
+  else if(streak<7)msg=`You are ${streak} day${streak>1?'s':''} into your streak. The foundation is forming. Keep your focus narrow and your practice deep.`;
+  else if(streak<21)msg=`${streak} days of unbroken practice. You are building something real. Maa is watching. Do not stop.`;
+  else if(streak<40)msg=`${streak} days. The practice is becoming you. This is no longer effort — it is becoming nature.`;
+  else msg=`${streak} days. You have crossed into transformation. Very few reach here. Do not squander this fire.`;
+  if(h<4)items.push('The darkest hour. This is when the committed rise. Light the lamp. Begin.');
+  else if(h<7)items.push('Sacred morning hours. Do not waste a single minute of this window.');
+  else if(h<12)items.push('Morning in progress. Keep the discipline set in the early hours.');
+  else if(h<16)items.push('Midday — maintain your mindfulness. Every moment of conscious work is sadhana.');
+  else if(h<19)items.push('Evening study window — sit with straight back, phone away, give it everything.');
+  else if(h<20)items.push('Evening Kundalini time — arrive to your mat. The quality of this session will determine tomorrow\'s fire.');
+  else items.push('Rest is part of the practice. Protect your sleep window. Sleep by 8:30 PM.');
+  if(avgSc>0&&avgSc<50)items.push('Your recent scores suggest your practice needs strengthening. Pick ONE thing to do perfectly today — not ten things at 50%.');
+  if(avgSc>=75)items.push('Your scores are strong. Now deepen the quality — don\'t just complete, be fully present in each act.');
+  if(avgQ1<30&&keys.length>3)items.push(`Morning sadhana quality has averaged ${Math.round(avgQ1)}/60. Focus on reducing mental blocks — try chanting aloud for the first 15 minutes.`);
+  if(avgB1>30&&keys.length>3)items.push('High blocks in morning sadhana. Before sitting, write your distractions on paper and set them aside consciously.');
+  if(weak&&vAvgs[weak.id]>0&&vAvgs[weak.id]<3)items.push(`Your weakest virtue recently is ${weak.name}. Today, make one conscious act that demonstrates this virtue.`);
+  if(mostMissed&&hmisses[mostMissed.id]>3)items.push(`"${mostMissed.name}" is your most missed block. Make this your non-negotiable today.`);
+  const dm=['Sunday — plan your week. Set intentions. Clean your space. Begin fresh.','Monday — set the tone for the whole week with this morning\'s practice.','Tuesday — the fire is warming. Keep the momentum.','Wednesday — halfway point. Renew your Sankalpa. Why are you doing this?','Thursday — push through. The weekday discipline defines you.','Friday — do not let the weekend mindset weaken today. Hold the standard.','Saturday — rest mindfully. Even rest can be sadhana when done consciously.'];
+  items.push(dm[dow]);
+  g('sugBd').textContent=msg;
+  g('sugIs').innerHTML=items.slice(0,4).map(i=>`<div class="sugi">${i}</div>`).join('');
+}
+
+// ══════════════════════════════════════════════════
+// SADHANA SCORES
+// ══════════════════════════════════════════════════
+function renderSadhana(){
+  const T=getDay(viewDate);
+  const s1=tmpl.sadhanaScores.filter(s=>s.session===1),s2=tmpl.sadhanaScores.filter(s=>s.session===2);
+  g('sadGrid').innerHTML=`
+  <div class="ss-c"><div class="ss-t">Morning Sadhana (3am–7am)</div>${s1.map(s=>`<div class="ss-r"><span class="ss-nm">${s.isBlock?'Blocks':'Quality'}</span><input type="number" class="ss-in" id="ss_${s.id}" min="0" max="${s.max}" value="${T.sadhana[s.id]||0}" oninput="setSadhana('${s.id}',this.value)"><span class="ss-mx">/${s.max}</span></div>`).join('')}</div>
+  <div class="ss-c"><div class="ss-t">Evening Sadhana (7pm–8:30pm)</div>${s2.map(s=>`<div class="ss-r"><span class="ss-nm">${s.isBlock?'Blocks':'Quality'}</span><input type="number" class="ss-in" id="ss_${s.id}" min="0" max="${s.max}" value="${T.sadhana[s.id]||0}" oninput="setSadhana('${s.id}',this.value)"><span class="ss-mx">/${s.max}</span></div>`).join('')}</div>`;
+  g('nM').value=T.nM||''; g('nE').value=T.nE||'';
+}
+function setSadhana(id,val){
+  const T=getDay(viewDate),s=tmpl.sadhanaScores.find(x=>x.id===id);
+  T.sadhana[id]=Math.min(Math.max(parseInt(val)||0,0),s.max);
+  calcScore(viewDate); dbPut('days',T); setTimeout(renderSadRadar,50);
+}
+function renderSadRadar(){
+  const T=getDay(viewDate);
+  const q1=T.sadhana.q1||0,b1=T.sadhana.b1||0,q2=T.sadhana.q2||0,b2=T.sadhana.b2||0;
+  const pD=tmpl.principles.filter(p=>T.principles[p.id]).length;
+  const rD=tmpl.rules.filter((_,i)=>T.rules[i]).length;
+  mkChart('sadRadar',{type:'radar',data:{labels:['Morning Quality','Morning (no blocks)','Evening Quality','Evening (no blocks)','Principles','Rules'],datasets:[{data:[Math.round(q1/60*100),Math.round((60-b1)/60*100),Math.round(q2/60*100),Math.round((60-b2)/60*100),Math.round(pD/Math.max(tmpl.principles.length,1)*100),Math.round(rD/Math.max(tmpl.rules.length,1)*100)],borderColor:'#d4a035',backgroundColor:'rgba(212,160,53,0.08)',borderWidth:1.5,pointBackgroundColor:'#d4a035',pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:9},color:'#5a5048'},grid:{color:'rgba(255,255,255,0.05)'},pointLabels:{font:{size:10},color:'#9a8e7e'}}}}});
+}
+
+// ══════════════════════════════════════════════════
+// VIRTUES
+// ══════════════════════════════════════════════════
+function renderVirtues(){
+  const T=getDay(viewDate);
+  g('virtGrid').innerHTML=tmpl.virtues.map(v=>{
+    const r=T.virtues[v.id]||0;
+    return `<div class="vc"><div class="vc-n">${v.name} <span style="color:var(--go);font-size:11px">${r}/5</span></div><div class="vc-d">${v.desc}</div><div class="stars">${[1,2,3,4,5].map(i=>`<div class="star${i<=r?' on':''}" onclick="setVirtue('${v.id}',${i})">${i<=r?'★':'☆'}</div>`).join('')}</div></div>`;
+  }).join('');
+  g('moralList').innerHTML=tmpl.moralChecks.map(m=>{
+    const c=T.moral[m.id]||false;
+    return `<div class="rr${c?' on':''}"><div class="rn">✦</div><div class="rt">${m.name}</div><div class="rk" onclick="togMoral('${m.id}')">${c?'✓':''}</div></div>`;
+  }).join('');
+}
+function setVirtue(id,val){const T=getDay(viewDate);T.virtues[id]=val;calcScore(viewDate);dbPut('days',T);renderVirtues();setTimeout(renderVirtRadar,50);}
+function togMoral(id){const T=getDay(viewDate);T.moral[id]=!T.moral[id];calcScore(viewDate);dbPut('days',T);renderVirtues();}
+function renderVirtRadar(){
+  const T=getDay(viewDate);
+  mkChart('virtRadar',{type:'radar',data:{labels:tmpl.virtues.map(v=>v.name),datasets:[{data:tmpl.virtues.map(v=>T.virtues[v.id]||0),borderColor:'#f0c060',backgroundColor:'rgba(240,192,96,0.08)',borderWidth:1.5,pointBackgroundColor:'#f0c060',pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:9},color:'#5a5048'},grid:{color:'rgba(255,255,255,0.05)'},pointLabels:{font:{size:11},color:'#9a8e7e'}}}}});
+}
+
+// ══════════════════════════════════════════════════
+// PRINCIPLES
+// ══════════════════════════════════════════════════
+function renderPrinciples(){
+  const T=getDay(viewDate);
+  g('princList').innerHTML=tmpl.principles.map((p,i)=>`<div class="pc${T.principles[p.id]?' on':''}"><div class="pc-ck" onclick="togPrinc('${p.id}')">${T.principles[p.id]?'✓':''}</div><div><div class="pc-n">${i+1}. ${p.name}</div><div class="pc-d">${p.desc}</div></div></div>`).join('');
+  g('rulesList').innerHTML=tmpl.rules.map((r,i)=>`<div class="rr${T.rules[i]?' on':''}"><div class="rn">${i+1}</div><div class="rt">${r}</div><div class="rk" onclick="togRule(${i})">${T.rules[i]?'✓':''}</div></div>`).join('');
+  g('affBox').innerHTML=tmpl.affirmations.map(a=>`<div class="aff-l">${a}</div>`).join('');
+}
+function togPrinc(id){const T=getDay(viewDate);T.principles[id]=!T.principles[id];dbPut('days',T);renderPrinciples();}
+function togRule(i){const T=getDay(viewDate);T.rules[i]=!T.rules[i];dbPut('days',T);renderPrinciples();}
+
+// ══════════════════════════════════════════════════
+// TASKS
+// ══════════════════════════════════════════════════
+function renderTasks(){
+  if(!window._tasks)window._tasks={};
+  if(!window._tasks[viewDate])window._tasks[viewDate]=[];
+  const tasks=window._tasks[viewDate];
+  g('taskList').innerHTML=tasks.length?tasks.map((t,i)=>`
+    <div class="ti-item${t.done?' done-t':''}">
+      <div class="ti-ck" onclick="togTask('${viewDate}',${i})">${t.done?'✓':''}</div>
+      <div class="ti-tx">${t.text}</div>
+      <div class="ti-sad" onclick="startSM('${t.text.replace(/'/g,"\\'")}')">🕉 Sadhana</div>
+      <div class="ti-sad" style="background:var(--rd);border-color:var(--re);color:var(--re);margin-left:2px" onclick="delTask('${viewDate}',${i})">×</div>
+    </div>`).join(''):'<div style="color:var(--tx3);font-size:12px;padding:.4rem">No tasks for today. Add one above.</div>';
+  g('sadMethod').innerHTML=tmpl.sadhanaMethod.map(m=>`<div style="display:flex;gap:7px;margin-bottom:5px"><span style="color:var(--go);flex-shrink:0">✦</span><span>${m}</span></div>`).join('');
+}
+function addTask(){
+  const inp=g('taskIn'),text=inp.value.trim();
+  if(!text)return;
+  if(!window._tasks)window._tasks={};
+  if(!window._tasks[viewDate])window._tasks[viewDate]=[];
+  window._tasks[viewDate].push({text,done:false,created:Date.now()});
+  inp.value=''; saveTasks(); renderTasks();
+}
+function togTask(date,i){window._tasks[date][i].done=!window._tasks[date][i].done;saveTasks();renderTasks();}
+function delTask(date,i){window._tasks[date].splice(i,1);saveTasks();renderTasks();}
+
+// ══════════════════════════════════════════════════
+// SADHANA MODE
+// ══════════════════════════════════════════════════
+function startSM(name){
+  smTaskName=name; smSec=0; smPaused=false;
+  g('smTask').textContent=name; g('smTi').textContent='00:00:00'; g('smPBtn').textContent='Pause';
+  g('smIns').innerHTML=(tmpl.sadhanaMethod||DEF.sadhanaMethod).map(m=>`<div class="sm-i">${m}</div>`).join('');
+  g('smOv').classList.add('open');
+  if(smInt)clearInterval(smInt);
+  smInt=setInterval(()=>{
+    if(!smPaused){smSec++;const h=String(Math.floor(smSec/3600)).padStart(2,'0'),m=String(Math.floor((smSec%3600)/60)).padStart(2,'0'),s=String(smSec%60).padStart(2,'0');g('smTi').textContent=`${h}:${m}:${s}`;}
+  },1000);
+}
+function pauseSM(){smPaused=!smPaused;g('smPBtn').textContent=smPaused?'Resume':'Pause';}
+function completeSM(){
+  clearInterval(smInt); g('smOv').classList.remove('open');
+  const mins=Math.round(smSec/60);
+  toast(`Completed in ${mins} min. Jai Maa! ✓`,3500);
+  const tasks=window._tasks?.[viewDate]||[];
+  const idx=tasks.findIndex(t=>t.text===smTaskName);
+  if(idx>=0){tasks[idx].done=true;saveTasks();renderTasks();}
+}
+function closeSM(){clearInterval(smInt);g('smOv').classList.remove('open');}
+
+// ══════════════════════════════════════════════════
+// WEEKLY
+// ══════════════════════════════════════════════════
+function renderWeekly(){
+  const now=new Date(),start=new Date(now);start.setDate(now.getDate()-now.getDay());
+  g('wkGrid').innerHTML=Array.from({length:7},(_,i)=>{
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    const k=d.toISOString().split('T')[0],s=allData[k]?.score||0,isT=k===new Date().toISOString().split('T')[0];
+    const lvl=s>=75?'high':s>=50?'mid':s>0?'low':'';
+    return `<div class="dc${isT?' today':''}"${lvl?` data-s="${lvl}"`:''}><span>${DS[d.getDay()]}</span><span class="dc-s">${s||'—'}</span></div>`;
+  }).join('');
+  g('wkSched').innerHTML=tmpl.schedule.map(s=>{
+    let cnt=0;for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=d.toISOString().split('T')[0];if(allData[k]?.schedule?.[s.id]?.done)cnt++;}
+    return `<div class="pb"><div class="pb-l"><span>${s.name}</span><span>${cnt}/7</span></div><div class="pb-t"><div class="pb-f" style="width:${Math.round(cnt/7*100)}%"></div></div></div>`;
+  }).join('');
+  const labs=[],q1d=[],q2d=[],hwd=[];
+  for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=d.toISOString().split('T')[0];labs.push(DS[d.getDay()]);q1d.push(allData[k]?.sadhana?.q1||null);q2d.push(allData[k]?.sadhana?.q2||null);hwd.push(allData[k]?.hw?allData[k].hw*6:null);}
+  mkChart('wkChart',{type:'line',data:{labels:labs,datasets:[{label:'Morning Q',data:q1d,borderColor:'#d4a035',tension:.4,borderWidth:1.5,pointRadius:3,spanGaps:true},{label:'Evening Q',data:q2d,borderColor:'#7c5cbf',tension:.4,borderWidth:1.5,pointRadius:3,spanGaps:true},{label:'HWM',data:hwd,borderColor:'#1a9e7a',tension:.4,borderWidth:1.5,pointRadius:3,spanGaps:true,borderDash:[3,3]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},color:'#9a8e7e',boxWidth:12}}},scales:{y:{min:0,max:60,ticks:{stepSize:15,font:{size:9},color:'#5a5048'},grid:{color:'rgba(255,255,255,0.04)'}},x:{ticks:{font:{size:11},color:'#5a5048'},grid:{display:false}}}}});
+  const wAvg=tmpl.virtues.map(v=>{let sum=0,cnt=0;for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=d.toISOString().split('T')[0];if(allData[k]?.virtues?.[v.id]){sum+=allData[k].virtues[v.id];cnt++;}}return cnt>0?+(sum/cnt).toFixed(1):0;});
+  mkChart('wkRadar',{type:'radar',data:{labels:tmpl.virtues.map(v=>v.name),datasets:[{data:wAvg,borderColor:'#22c99a',backgroundColor:'rgba(34,201,154,0.08)',borderWidth:1.5,pointBackgroundColor:'#22c99a',pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:9},color:'#5a5048'},grid:{color:'rgba(255,255,255,0.05)'},pointLabels:{font:{size:11},color:'#9a8e7e'}}}}});
+}
+
+// ══════════════════════════════════════════════════
+// PROGRESS
+// ══════════════════════════════════════════════════
+function renderProgress(){
+  const keys=Object.keys(allData).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+  const scores=keys.map(k=>allData[k].score||0).filter(s=>s>0);
+  const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):0;
+  let best=0,cur=0;
+  keys.forEach(k=>{if(allData[k].score>0){cur++;best=Math.max(best,cur);}else cur=0;});
+  const q1s=keys.map(k=>allData[k]?.sadhana?.q1||0).filter(v=>v>0);
+  const avgQ1=q1s.length?(q1s.reduce((a,b)=>a+b,0)/q1s.length).toFixed(1):'—';
+  g('p_d').textContent=keys.length; g('p_b').textContent=best; g('p_a').textContent=avg||'—'; g('p_q').textContent=avgQ1;
+  g('hmap').innerHTML=Array.from({length:90},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(89-i));const k=d.toISOString().split('T')[0],s=allData[k]?.score||0,l=s>=75?3:s>=50?2:s>0?1:0;return `<div class="hc"${l?` data-l="${l}"`:''}></div>`;}).join('');
+  const last30=Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(29-i));return d.toISOString().split('T')[0];});
+  mkChart('trChart',{type:'line',data:{labels:last30.map(k=>{const d=new Date(k+'T12:00:00');return MS[d.getMonth()]+' '+d.getDate();}),datasets:[{data:last30.map(k=>allData[k]?.score||null),borderColor:'#d4a035',backgroundColor:'rgba(212,160,53,0.06)',tension:.4,borderWidth:1.5,pointRadius:2,fill:true,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{stepSize:25,font:{size:9},color:'#5a5048'},grid:{color:'rgba(255,255,255,0.04)'}},x:{ticks:{font:{size:9},color:'#5a5048',maxTicksLimit:8},grid:{display:false}}}}});
+  const last14=Array.from({length:14},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(13-i));return d.toISOString().split('T')[0];});
+  mkChart('sadHist',{type:'bar',data:{labels:last14.map(k=>MS[new Date(k+'T12:00:00').getMonth()]+' '+new Date(k+'T12:00:00').getDate()),datasets:[{label:'Morning Q',data:last14.map(k=>allData[k]?.sadhana?.q1||null),backgroundColor:'rgba(212,160,53,0.6)',borderRadius:3},{label:'Evening Q',data:last14.map(k=>allData[k]?.sadhana?.q2||null),backgroundColor:'rgba(124,92,191,0.6)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},color:'#9a8e7e',boxWidth:10}}},scales:{y:{min:0,max:60,ticks:{stepSize:20,font:{size:9},color:'#5a5048'},grid:{color:'rgba(255,255,255,0.04)'}},x:{ticks:{font:{size:9},color:'#5a5048',maxTicksLimit:7},grid:{display:false}}}}});
+  mkChart('virtHist',{type:'line',data:{labels:last14.map(k=>MS[new Date(k+'T12:00:00').getMonth()]+' '+new Date(k+'T12:00:00').getDate()),datasets:tmpl.virtues.slice(0,4).map((v,i)=>({label:v.name,data:last14.map(k=>allData[k]?.virtues?.[v.id]||null),borderColor:['#d4a035','#7c5cbf','#1a9e7a','#2d6cdf'][i],tension:.4,borderWidth:1.5,pointRadius:2,spanGaps:true}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},color:'#9a8e7e',boxWidth:10}}},scales:{y:{min:0,max:5,ticks:{stepSize:1,font:{size:9},color:'#5a5048'},grid:{color:'rgba(255,255,255,0.04)'}},x:{ticks:{font:{size:9},color:'#5a5048',maxTicksLimit:7},grid:{display:false}}}}});
+  // Badges
+  const badges=[
+    {name:'First Day',cond:keys.length>=1},{name:'1 Week',cond:best>=7},{name:'2 Weeks',cond:best>=14},
+    {name:'21 Days',cond:best>=21},{name:'40 Days',cond:best>=40},{name:'3 Months',cond:best>=90},
+    {name:'100 Days',cond:best>=100},{name:'Perfect Score',cond:scores.some(s=>s>=95)},
+    {name:'High Average',cond:avg>=75},{name:'Master',cond:best>=365}
+  ];
+  g('bdgGrid').innerHTML=badges.map(b=>`<div class="badge${b.cond?' on':''}">${b.cond?'✦':''} ${b.name}</div>`).join('');
+}
+
+// ══════════════════════════════════════════════════
+// CALENDAR
+// ══════════════════════════════════════════════════
+function renderCalendar(){
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  g('calTit').textContent=MF[m]+' '+y;
+  g('calHdr').innerHTML=DS.map(d=>`<div class="cd-h">${d}</div>`).join('');
+  const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),tod=new Date().toISOString().split('T')[0];
+  let cells='';
+  for(let i=0;i<first;i++)cells+=`<div class="cc om"></div>`;
+  for(let i=1;i<=days;i++){
+    const k=`${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+    const s=allData[k]?.score||0,lvl=s>=75?'high':s>=50?'mid':s>0?'low':'';
+    cells+=`<div class="cc${k===tod?' today':''}${s>0?' hd':''}${k===viewDate?' sel':''}"${lvl?` data-s="${lvl}"`:''}onclick="calSel('${k}')">${i}</div>`;
+  }
+  g('calGrid').innerHTML=cells;
+}
+function calNav(d){calDate.setMonth(calDate.getMonth()+d);renderCalendar();}
+function calSel(dateStr){
+  viewDate=dateStr;
+  const d=new Date(dateStr+'T12:00:00');
+  g('calDayTit').innerHTML=`<div class="ct-d"></div>${DS[d.getDay()]}, ${MS[d.getMonth()]} ${d.getDate()} ${d.getFullYear()}`;
+  const T=getDay(dateStr),sc=T.score||0,dn=tmpl.schedule.filter(s=>T.schedule[s.id]?.done).length;
+  g('calDayCnt').innerHTML=`<div class="sg" style="grid-template-columns:repeat(4,1fr);margin-bottom:.6rem"><div class="sc"><div class="sc-n" style="color:var(--go)">${sc||'—'}</div><div class="sc-l">Score</div></div><div class="sc"><div class="sc-n" style="color:var(--te)">${dn}/${tmpl.schedule.length}</div><div class="sc-l">Done</div></div><div class="sc"><div class="sc-n" style="color:var(--go2)">${T.sadhana.q1||0}/60</div><div class="sc-l">Morn Q</div></div><div class="sc"><div class="sc-n" style="color:var(--pu)">${T.sadhana.q2||0}/60</div><div class="sc-l">Even Q</div></div></div>${T.refS?`<div style="font-size:12px;color:var(--tx2);margin-bottom:.4rem"><span style="color:var(--go);font-size:10px;text-transform:uppercase;letter-spacing:.05em">Sadhana Note</span><br>${T.refS}</div>`:''}${T.refB?`<div style="font-size:12px;color:var(--tx2);margin-bottom:.4rem"><span style="color:var(--tx3);font-size:10px;text-transform:uppercase;letter-spacing:.05em">Reflection</span><br>${T.refB}</div>`:''}<button class="btn bh sm" style="margin-top:.4rem" onclick="showTab(null,'today')">View / Edit This Day</button>`;
+  g('calDayCard').style.display='block'; renderCalendar();
+}
+
+// ══════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════
+function renderSettings(){
+  g('schedEd').innerHTML=tmpl.schedule.map((s,i)=>`<div class="te-r"><input class="ti" style="flex:2" value="${s.name}" onchange="tmpl.schedule[${i}].name=this.value"><input class="ti" style="flex:1.5" value="${s.time}" onchange="tmpl.schedule[${i}].time=this.value"><div class="te-d" onclick="tmpl.schedule.splice(${i},1);renderSettings()">×</div></div>`).join('')+`<div style="margin-top:3px"><button class="btn bh sm" onclick="addSched()">+ Block</button></div>`;
+  g('princEd').innerHTML=tmpl.principles.map((p,i)=>`<div class="te-r"><input class="ti" style="flex:1" value="${p.name}" onchange="tmpl.principles[${i}].name=this.value"><input class="ti" style="flex:2" value="${p.desc}" onchange="tmpl.principles[${i}].desc=this.value"><div class="te-d" onclick="tmpl.principles.splice(${i},1);renderSettings()">×</div></div>`).join('')+`<div style="margin-top:3px"><button class="btn bh sm" onclick="addPrinc()">+ Principle</button></div>`;
+  g('affEd').innerHTML=tmpl.affirmations.map((a,i)=>`<div class="te-r"><input class="ti" style="flex:1" value="${a}" onchange="tmpl.affirmations[${i}]=this.value"><div class="te-d" onclick="tmpl.affirmations.splice(${i},1);renderSettings()">×</div></div>`).join('')+`<div style="margin-top:3px"><button class="btn bh sm" onclick="addAff()">+ Affirmation</button></div>`;
+}
+function addSched(){tmpl.schedule.push({id:'c_'+Date.now(),name:'New Block',time:'',note:'',color:'var(--go)',isSadhana:false});renderSettings();}
+function addPrinc(){tmpl.principles.push({id:'p_'+Date.now(),name:'New Principle',desc:'Description'});renderSettings();}
+function addAff(){tmpl.affirmations.push('NEW AFFIRMATION');renderSettings();}
+
+// ══════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ══════════════════════════════════════════════════
+function exportData(){
+  const payload={version:3,exportDate:new Date().toISOString(),template:tmpl,days:allData,tasks:window._tasks||{}};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url; a.download=`sadhana_${new Date().toISOString().split('T')[0]}.json`; a.click();
+  URL.revokeObjectURL(url); toast('Exported ✓');
+}
+function importData(input){
+  const file=input.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    try{
+      const p=JSON.parse(e.target.result);
+      if(p.template){tmpl=p.template;await dbPut('meta',{key:'template',value:tmpl});}
+      if(p.days){allData=p.days;for(const[date,day]of Object.entries(allData))await dbPut('days',{...day,date});}
+      if(p.tasks){window._tasks=p.tasks;await saveTasks();}
+      renderToday(); toast('Imported ✓');
+    }catch(e){toast('Import failed — invalid file');}
+  };
+  reader.readAsText(file); input.value='';
+}
+
+// ══════════════════════════════════════════════════
+// GOOGLE DRIVE SYNC
+// ══════════════════════════════════════════════════
+function openDriveModal(){g('drModal').classList.add('open');const saved=localStorage.getItem('sad_cid');if(saved)g('clientIdIn').value=saved;}
+function closeModal(id){g(id).classList.remove('open');}
+function initDrive(){openDriveModal();}
+
+function connectDrive(){
+  const cid=g('clientIdIn').value.trim();
+  if(!cid||!cid.includes('.apps.googleusercontent')){toast('Enter a valid Google Client ID');return;}
+  if(!navigator.onLine){toast('No internet — connect and try again');return;}
+  localStorage.setItem('sad_cid',cid);
+  const scope=encodeURIComponent('https://www.googleapis.com/auth/drive.file');
+  const redirect=encodeURIComponent(window.location.href.split('?')[0].split('#')[0]);
+  const authUrl=`https://accounts.google.com/o/oauth2/auth?client_id=${cid}&redirect_uri=${redirect}&scope=${scope}&response_type=token&include_granted_scopes=true`;
+  const popup=window.open(authUrl,'gdrive_auth','width=500,height=600,noopener');
+  // Token will come back in URL hash if redirect is same page
+  const poll=setInterval(()=>{
+    try{
+      if(popup&&popup.closed){clearInterval(poll);}
+      if(popup&&popup.location&&popup.location.hash){
+        const hash=popup.location.hash;
+        if(hash.includes('access_token')){
+          const token=hash.match(/access_token=([^&]+)/)?.[1];
+          if(token){driveToken=token;localStorage.setItem('sad_dt',token);clearInterval(poll);popup.close();closeModal('drModal');updSync('connected');manualSync();toast('Google Drive connected ✓');}
+        }
+      }
+    }catch(e){}
+  },500);
+  // Fallback message listener
+  window.addEventListener('message',e=>{
+    if(e.data?.access_token){driveToken=e.data.access_token;localStorage.setItem('sad_dt',driveToken);closeModal('drModal');updSync('connected');manualSync();toast('Google Drive connected ✓');}
+  },{once:true});
+}
+
+function updSync(status){
+  const dot=g('sd'),lbl=g('sl');
+  if(status==='connected'){dot.className='sd g';lbl.textContent='Synced';}
+  else if(status==='syncing'){dot.className='sd y';lbl.textContent='Syncing...';}
+  else if(status==='error'){dot.className='sd r';lbl.textContent='Error';}
+  else{dot.className='sd y';lbl.textContent='Drive';}
+}
+
+async function manualSync(){
+  driveToken=driveToken||localStorage.getItem('sad_dt');
+  if(!driveToken||!navigator.onLine){if(!navigator.onLine)toast('Offline — will sync when connected');return;}
+  try{
+    updSync('syncing');
+    const payload=JSON.stringify({version:3,exportDate:new Date().toISOString(),template:tmpl,days:allData,tasks:window._tasks||{}});
+    const meta={name:'sadhana_data.json',mimeType:'application/json'};
+    const form=new FormData();
+    form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+    form.append('file',new Blob([payload],{type:'application/json'}));
+    const url=driveFileId?`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`:'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    const method=driveFileId?'PATCH':'POST';
+    const res=await fetch(url,{method,headers:{Authorization:`Bearer ${driveToken}`},body:form});
+    const data=await res.json();
+    if(data.id){driveFileId=data.id;localStorage.setItem('sad_dfid',driveFileId);updSync('connected');localStorage.setItem('sad_ls',new Date().toISOString());const dr=g('drStatus');if(dr)dr.textContent='Last synced: '+new Date().toLocaleString();}
+    else if(data.error?.code===401){driveToken=null;localStorage.removeItem('sad_dt');updSync('error');toast('Drive session expired — reconnect in Settings');}
+    else updSync('error');
+  }catch(e){updSync('error');}
+}
+function schSync(){clearTimeout(syncTimer);syncTimer=setTimeout(manualSync,30000);}
+
+// ══════════════════════════════════════════════════
+// PWA INSTALL
+// ══════════════════════════════════════════════════
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault(); installPrompt=e;
+  g('ib').classList.add('show');
+});
+window.addEventListener('appinstalled',()=>{g('ib').classList.remove('show');toast('App installed! Open it from your home screen 🎉',4000);});
+function doInstall(){
+  if(!installPrompt)return;
+  installPrompt.prompt();
+  installPrompt.userChoice.then(r=>{if(r.outcome==='accepted')g('ib').classList.remove('show');installPrompt=null;});
+}
+
+// ══════════════════════════════════════════════════
+// OFFLINE DETECTION
+// ══════════════════════════════════════════════════
+window.addEventListener('online',()=>{g('ob').classList.remove('show');manualSync();});
+window.addEventListener('offline',()=>{g('ob').classList.add('show');});
+if(!navigator.onLine)g('ob').classList.add('show');
+
+// ══════════════════════════════════════════════════
+// CLEAR DATA
+// ══════════════════════════════════════════════════
+function clearData(){
+  if(!confirm('Delete ALL data? This cannot be undone.'))return;
+  allData={};
+  const r=indexedDB.deleteDatabase(DB_NAME);
+  r.onsuccess=()=>location.reload();
+}
+
+// ══════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+  if(e.key==='s'&&(e.ctrlKey||e.metaKey)){e.preventDefault();saveDay();}
+});
+// Enter to add task
+document.addEventListener('DOMContentLoaded',()=>{
+  g('taskIn')?.addEventListener('keydown',e=>{if(e.key==='Enter')addTask();});
+});
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+async function init(){
+  await initDB();
+  await loadAll();
+  g('tkr').textContent=(tmpl.affirmations||DEF.affirmations).join('   ✦   ');
+  renderToday();
+  // Restore drive
+  driveToken=localStorage.getItem('sad_dt');
+  const ls=localStorage.getItem('sad_ls');
+  if(driveToken&&ls){updSync('connected');const dr=g('drStatus');if(dr)dr.textContent='Last synced: '+new Date(ls).toLocaleString();}
+  // Auto-save every 2 min
+  setInterval(async()=>{
+    const T=getDay(viewDate);
+    T.refS=g('refS')?.value||T.refS;
+    T.refB=g('refB')?.value||T.refB;
+    T.refT=g('refT')?.value||T.refT;
+    calcScore(viewDate);
+    await dbPut('days',T);
+  },120000);
+}
+init();
+</script>
+</body>
+</html>
