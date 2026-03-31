@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -588,6 +592,8 @@ hr{border:none;border-top:1px solid var(--bd);margin:.85rem 0}
     <div style="font-size:11px;color:var(--tx3);margin-top:.5rem">All data is stored in your browser's IndexedDB — works fully offline forever.</div>
   </div>
   <button class="btn bg" style="margin-top:.5rem" id="saveTplBtn" onclick="saveTpl()">Save Template Changes ✓</button>
+  <button onclick="login()">Login with Google</button>
+  <button onclick="saveDay()">Save Day</button>
 </section>
 
 </main>
@@ -652,6 +658,34 @@ hr{border:none;border-top:1px solid var(--bd);margin:.85rem 0}
 <div class="toast" id="toast"></div>
 
 <script>
+function saveDay() {
+  let totalScore = 80; // you can change later
+
+  saveToCloud({
+    score: totalScore,
+    date: new Date().toISOString()
+  });
+}
+function saveToCloud(data) {
+  const user = auth.currentUser;
+
+  if (!user) {
+    alert("Please login first");
+    return;
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+
+  db.collection("users")
+    .doc(user.uid)
+    .collection("days")
+    .doc(today)
+    .set(data)
+    .then(() => {
+      alert("Saved to cloud ☁️");
+    });
+}
+
 // ══════════════════════════════════════════════════
 // CHART.JS — loaded inline for full offline support
 // ══════════════════════════════════════════════════
@@ -1342,6 +1376,17 @@ async function init(){
   },120000);
 }
 init();
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyC7jopSYlfAZig50XQuF-1mPbXQtWLHHMc",
+  authDomain: "kundalinisadhana-8050e.firebaseapp.com",
+  projectId: "kundalinisadhana-8050e",
+  storageBucket: "kundalinisadhana-8050e.firebasestorage.app",
+  messagingSenderId: "333101704976",
+  appId: "1:333101704976:web:19d5625ea1f80ceb686795",
+  measurementId: "G-38BLYSXNKV"
+};
 </script>
 </body>
 </html>
+
